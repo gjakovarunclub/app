@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
+  Linking,
+  SafeAreaView,
   ScrollView,
+  Share,
   StatusBar,
   StyleSheet,
   Text,
@@ -9,189 +12,64 @@ import {
   View,
 } from 'react-native';
 
-type Tab = 'Kryefaqja' | 'Vrapimet' | 'Klubi' | 'Profili';
+type Tab = 'Sot' | 'Vrapimet' | 'Klubi' | 'Profili';
+type Run = { id: string; title: string; day: string; time: string; distance: string; place: string; level: string; description: string };
 
-const COLORS = {
-  background: '#0B1220',
-  surface: '#121D2E',
-  surfaceRaised: '#18263A',
-  line: '#26364B',
-  text: '#F4F7FB',
-  muted: '#9BAABD',
-  lime: '#C6F36A',
-  blue: '#82B7FF',
-};
+const C = { bg: '#0B1220', panel: '#121D2E', panel2: '#18263A', border: '#26364B', text: '#F4F7FB', muted: '#9BAABD', lime: '#C6F36A', blue: '#82B7FF' };
+const runs: Run[] = [
+  { id: 'community', title: 'Vrapim i përbashkët', day: 'E shtunë', time: '08:00', distance: '5 km', place: 'Gjakovë · pika e takimit konfirmohet', level: 'Të gjitha nivelet', description: 'Vrapim shoqëror me ritëm të rehatshëm. Të gjithë janë të mirëseardhur, edhe nëse është vrapimi yt i parë.' },
+  { id: 'easy', title: 'Vrapim i lehtë', day: 'E mërkurë', time: '18:30', distance: '3–5 km', place: 'Gjakovë · pika e takimit konfirmohet', level: 'Ritëm i lehtë', description: 'Një vrapim i qetë pas dite, i përshtatshëm për të lëvizur dhe për t’u njohur me komunitetin.' },
+];
 
-function Tag({ children }: { children: string }) {
-  return <View style={styles.tag}><Text style={styles.tagText}>{children}</Text></View>;
+function nextSaturday() {
+  const d = new Date();
+  const offset = (6 - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + offset);
+  return d.toLocaleDateString('sq-AL', { day: 'numeric', month: 'short' }).replace('.', '').toUpperCase();
 }
-
-function SectionTitle({ title, action }: { title: string; action?: string }) {
-  return (
-    <View style={styles.sectionHeading}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {action ? <Text style={styles.sectionAction}>{action}</Text> : null}
-    </View>
-  );
+function Heading({ title, link, onPress }: { title: string; link?: string; onPress?: () => void }) {
+  return <View style={s.heading}><Text style={s.headingText}>{title}</Text>{link ? <TouchableOpacity onPress={onPress}><Text style={s.link}>{link}</Text></TouchableOpacity> : null}</View>;
 }
+function Pill({ children }: { children: string }) { return <View style={s.pill}><Text style={s.pillText}>{children}</Text></View>; }
+function Brand() { return <View style={s.brandRow}><View style={s.brandIcon}><Text style={s.brandIconText}>G</Text></View><View style={{ flex: 1, marginLeft: 10 }}><Text style={s.brandName}>GJAKOVA</Text><Text style={s.brandSub}>RUN CLUB</Text></View><View style={s.liveDot} /><Text style={s.brandStatus}>KOMUNITETI YT</Text></View>; }
 
-function HomeScreen({ onTab, going, onToggleGoing }: { onTab: (tab: Tab) => void; going: boolean; onToggleGoing: () => void }) {
-  return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.topline}>
-        <View style={styles.brandMark}><Text style={styles.brandMarkText}>G</Text></View>
-        <View style={styles.brandCopy}>
-          <Text style={styles.brandName}>GJAKOVA</Text>
-          <Text style={styles.brandSub}>RUN CLUB</Text>
-        </View>
-        <TouchableOpacity accessibilityLabel="Njoftimet" style={styles.bell} onPress={() => Alert.alert('Njoftimet', 'Njoftimet e klubit do të shfaqen këtu.')}>
-          <Text style={styles.bellText}>♧</Text>
-          <View style={styles.bellDot} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.welcomeRow}>
-        <View>
-          <Text style={styles.eyebrow}>E MËRKURË · GJAKOVË</Text>
-          <Text style={styles.greeting}>Vrapojmë{ '\n' }së bashku.</Text>
-        </View>
-        <View style={styles.shoeCircle}><Text style={styles.shoeEmoji}>🏃</Text></View>
-      </View>
-      <Text style={styles.intro}>Çdo hap ka më shumë kuptim kur e ndajmë me njëri-tjetrin.</Text>
-
-      <View style={styles.statsCard}>
-        <View style={styles.statBlock}><Text style={styles.statValue}>5.2</Text><Text style={styles.statLabel}>KM SOT</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statBlock}><Text style={styles.statValue}>248</Text><Text style={styles.statLabel}>Vrapues</Text></View>
-        <View style={styles.statDivider} />
-        <View style={styles.statBlock}><Text style={styles.statValue}>12</Text><Text style={styles.statLabel}>Evente</Text></View>
-      </View>
-
-      <SectionTitle title="Vrapimi i radhës" action="KALENDARI  →" />
-      <View style={styles.eventCard}>
-        <View style={styles.eventTop}>
-          <Tag>Vrapim i përbashkët</Tag>
-          <Text style={styles.eventDate}>E SHTUNË · 08:00</Text>
-        </View>
-        <Text style={styles.eventTitle}>Rrugëve të Gjakovës</Text>
-        <Text style={styles.eventDescription}>Ritëm i lehtë, shoqëri e mirë. Të gjithë janë të mirëseardhur.</Text>
-        <View style={styles.eventMetaRow}>
-          <Text style={styles.eventMeta}>⌖  Çarshia e Vjetër</Text>
-          <Text style={styles.eventMeta}>◷  5 km</Text>
-        </View>
-        <TouchableOpacity style={[styles.primaryButton, going && styles.buttonGoing]} onPress={onToggleGoing}>
-          <Text style={styles.primaryButtonText}>{going ? '✓  Je në listë' : 'Bashkohu me ne  →'}</Text>
-        </TouchableOpacity>
-        <Text style={styles.attendeeText}>● ● ●  +18 të tjerë marrin pjesë</Text>
-      </View>
-
-      <SectionTitle title="Në klub" action="SHIKO TË GJITHA  →" />
-      <View style={styles.clubCard}>
-        <View style={styles.clubIcon}><Text style={styles.clubIconText}>✦</Text></View>
-        <View style={styles.clubCopy}>
-          <Text style={styles.clubTitle}>Vrapimi është për të gjithë</Text>
-          <Text style={styles.clubDescription}>Gjej ritmin tënd. Ne të presim.</Text>
-        </View>
-        <TouchableOpacity onPress={() => onTab('Klubi')}><Text style={styles.chevron}>›</Text></TouchableOpacity>
-      </View>
-      <View style={styles.bottomSpace} />
-    </ScrollView>
-  );
+function Home({ going, setGoing, onTab, onOpenRun }: { going: boolean; setGoing: (v: boolean) => void; onTab: (t: Tab) => void; onOpenRun: (r: Run) => void }) {
+  const date = useMemo(nextSaturday, []);
+  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+    <Brand />
+    <Text style={s.eyebrow}>GJAKOVË · LËVIZIM SË BASHKU</Text>
+    <Text style={s.hero}>Qyteti ynë.{ '\n' }Ritmi ynë.</Text>
+    <Text style={s.bodyLead}>Një klub vrapimi i hapur për të gjithë. Eja për vrap, qëndro për komunitetin.</Text>
+    <View style={s.heroPanel}><View style={s.heroPanelTop}><Pill>TAKIMI I ARDHSHËM</Pill><Text style={s.heroDate}>{date}</Text></View><Text style={s.eventTitle}>{runs[0].title}</Text><Text style={s.eventSummary}>Një vrapim i përbashkët, me ritëm të rehatshëm dhe shoqëri të mirë.</Text><View style={s.metaRow}><Text style={s.meta}>◷  {runs[0].time}</Text><Text style={s.meta}>↗  {runs[0].distance}</Text></View><View style={s.buttonRow}><TouchableOpacity style={[s.primary, going && s.primaryDone]} onPress={() => setGoing(!going)}><Text style={s.primaryText}>{going ? '✓  U regjistrove' : 'Më intereson  →'}</Text></TouchableOpacity><TouchableOpacity style={s.circleButton} onPress={() => onOpenRun(runs[0])}><Text style={s.circleButtonText}>↗</Text></TouchableOpacity></View><Text style={s.disclaimer}>Orari dhe vendtakimi duhen konfirmuar nga klubi.</Text></View>
+    <Heading title="Gjej ritmin tënd" link="TË GJITHA  →" onPress={() => onTab('Vrapimet')} />
+    <View style={s.featureRow}><View style={s.featureIcon}><Text style={s.featureIconText}>01</Text></View><View style={{ flex: 1 }}><Text style={s.featureTitle}>Fillestar apo me përvojë?</Text><Text style={s.featureText}>Ka vend për çdo ritëm dhe çdo nivel.</Text></View><Text style={s.chevron}>›</Text></View>
+    <View style={s.featureRow}><View style={[s.featureIcon, { backgroundColor: '#1C2C42' }]}><Text style={[s.featureIconText, { color: C.blue }]}>02</Text></View><View style={{ flex: 1 }}><Text style={s.featureTitle}>Më shumë se vrapim</Text><Text style={s.featureText}>Njih njerëz të rinj dhe zbulo qytetin bashkë.</Text></View><Text style={s.chevron}>›</Text></View>
+    <TouchableOpacity style={s.outline} onPress={() => onTab('Klubi')}><Text style={s.outlineText}>Njih klubin  →</Text></TouchableOpacity>
+  </ScrollView>;
 }
-
-function RunsScreen({ going, onToggleGoing }: { going: boolean; onToggleGoing: () => void }) {
-  return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.eyebrow}>PLANIFIKO JAVËN</Text>
-      <Text style={styles.pageTitle}>Vrapimet</Text>
-      <Text style={styles.pageIntro}>Takime të hapura për çdo nivel dhe çdo ritëm.</Text>
-      <View style={styles.weekStrip}>
-        {['HËN', 'MAR', 'MËR', 'ENJ', 'PRE', 'SHT', 'DIE'].map((day, i) => <View key={day} style={[styles.dayCell, i === 5 && styles.daySelected]}><Text style={[styles.dayText, i === 5 && styles.dayTextSelected]}>{day}</Text><Text style={[styles.dayNumber, i === 5 && styles.dayTextSelected]}>{['02','03','04','05','06','07','08'][i]}</Text></View>)}
-      </View>
-      <SectionTitle title="Këtë javë" />
-      <View style={styles.runListCard}>
-        <View style={styles.runDateBox}><Text style={styles.runMonth}>QER</Text><Text style={styles.runDay}>07</Text></View>
-        <View style={styles.runInfo}><Text style={styles.runTime}>08:00 · 5 KM</Text><Text style={styles.runName}>Rrugëve të Gjakovës</Text><Text style={styles.runPlace}>⌖  Çarshia e Vjetër</Text></View>
-      </View>
-      <TouchableOpacity style={[styles.primaryButton, going && styles.buttonGoing]} onPress={onToggleGoing}><Text style={styles.primaryButtonText}>{going ? '✓  Je në listën e pjesëmarrësve' : 'Regjistrohu për vrapim  →'}</Text></TouchableOpacity>
-      <View style={[styles.runListCard, styles.secondRun]}>
-        <View style={styles.runDateBox}><Text style={styles.runMonth}>QER</Text><Text style={styles.runDay}>11</Text></View>
-        <View style={styles.runInfo}><Text style={styles.runTime}>18:30 · 3 KM</Text><Text style={styles.runName}>Vrapim pas pune</Text><Text style={styles.runPlace}>⌖  Parku i Qytetit</Text></View>
-      </View>
-      <View style={styles.noteCard}><Text style={styles.noteTitle}>Këshillë e klubit</Text><Text style={styles.noteText}>Eja 10 minuta më herët për t'u ngrohur dhe përshëndetur me ekipin.</Text></View>
-    </ScrollView>
-  );
+function Runs({ going, setGoing, onOpenRun }: { going: boolean; setGoing: (v: boolean) => void; onOpenRun: (r: Run) => void }) {
+  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}><Text style={s.eyebrow}>TAKIME TË HAPURA</Text><Text style={s.pageTitle}>Vrapimet</Text><Text style={s.pageIntro}>Vrapime shoqërore për çdo nivel. Detajet e takimeve publikohen nga klubi.</Text><View style={s.notice}><Text style={s.noticeMark}>i</Text><Text style={s.noticeText}>Orari dhe pikat e takimit më poshtë janë shembuj demonstrues, jo kalendar i konfirmuar.</Text></View>{runs.map((run, i) => <View key={run.id} style={s.runCard}><View style={s.runCardTop}><Pill>{run.level}</Pill><Text style={s.runOrdinal}>0{i + 1}</Text></View><Text style={s.runTitle}>{run.title}</Text><Text style={s.runDescription}>{run.description}</Text><View style={s.rule} /><Text style={s.runMeta}>◷  {run.day} · {run.time}</Text><Text style={s.runMeta}>↗  {run.distance}</Text><Text style={s.runMeta}>⌖  {run.place}</Text><View style={s.buttonRow}><TouchableOpacity style={[s.primary, going && i === 0 && s.primaryDone]} onPress={() => i === 0 && setGoing(!going)}><Text style={s.primaryText}>{i === 0 && going ? '✓  U regjistrove' : 'Shiko detajet  →'}</Text></TouchableOpacity><TouchableOpacity style={s.circleButton} onPress={() => onOpenRun(run)}><Text style={s.circleButtonText}>›</Text></TouchableOpacity></View></View>)}</ScrollView>;
 }
-
-function ClubScreen() {
-  return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.eyebrow}>NJË EKIP. NJË QYTET.</Text>
-      <Text style={styles.pageTitle}>Klubi ynë</Text>
-      <Text style={styles.pageIntro}>Gjakova Run Club bashkon njerëz që besojnë se lëvizja dhe shoqëria e mirë e bëjnë qytetin më të bukur.</Text>
-      <View style={styles.manifestoCard}><Text style={styles.manifestoQuote}>“</Text><Text style={styles.manifestoText}>Nuk ka rëndësi sa shpejt vrapon. Rëndësi ka që nisesh.</Text><Text style={styles.manifestoCaption}>— FILOZOFIA GRC</Text></View>
-      <SectionTitle title="Çfarë na bashkon" />
-      {[['01', 'Gjithëpërfshirja', 'Vrapues të çdo niveli, moshe dhe ritmi.'], ['02', 'Komuniteti', 'Mbështesim njëri-tjetrin, në çdo hap.'], ['03', 'Gjakova', 'Zbulojmë dhe vlerësojmë qytetin tonë.']].map(([n, title, description]) => <View key={n} style={styles.valueRow}><Text style={styles.valueNumber}>{n}</Text><View style={styles.valueCopy}><Text style={styles.valueTitle}>{title}</Text><Text style={styles.valueDescription}>{description}</Text></View></View>)}
-      <TouchableOpacity style={styles.outlineButton} onPress={() => Alert.alert('Mirë se vjen!', 'Na shkruaj në Instagram @gjakovarunclub për t’u bashkuar me komunitetin.')}><Text style={styles.outlineButtonText}>Bëhu pjesë e klubit  →</Text></TouchableOpacity>
-    </ScrollView>
-  );
+function Club() {
+  const contact = () => Linking.openURL('https://www.instagram.com/gjakovarunclub/').catch(() => Alert.alert('Nuk u hap lidhja', 'Provo përsëri më vonë.'));
+  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}><Text style={s.eyebrow}>NJË EKIP · NJË QYTET</Text><Text style={s.pageTitle}>Klubi ynë</Text><Text style={s.pageIntro}>Gjakova Run Club është një komunitet për njerëzit që duan të vrapojnë, të lëvizin dhe të kalojnë kohë së bashku.</Text><View style={s.manifesto}><Text style={s.quote}>“</Text><Text style={s.manifestoText}>Nuk ka rëndësi sa shpejt vrapon. Rëndësi ka që nisesh.</Text><Text style={s.manifestoLabel}>FILLO KU JE. VAZHDO BASHKË.</Text></View><Heading title="Vlerat tona" />{[['01', 'Gjithëpërfshirja', 'Çdo moshë, nivel dhe ritëm janë të mirëseardhura.'], ['02', 'Komuniteti', 'Mbështesim dhe motivojmë njëri-tjetrin.'], ['03', 'Gjakova', 'Vrapojmë dhe e zbulojmë qytetin tonë.']].map(([n, title, copy]) => <View style={s.valueRow} key={n}><Text style={s.valueN}>{n}</Text><View><Text style={s.valueTitle}>{title}</Text><Text style={s.valueCopy}>{copy}</Text></View></View>)}<TouchableOpacity style={s.primaryWide} onPress={contact}><Text style={s.primaryText}>Na kontakto në Instagram  ↗</Text></TouchableOpacity></ScrollView>;
 }
-
-function ProfileScreen() {
-  return (
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.eyebrow}>HAPËSIRA JOTE</Text>
-      <Text style={styles.pageTitle}>Profili</Text>
-      <View style={styles.profileCard}><View style={styles.avatar}><Text style={styles.avatarText}>🏃</Text></View><Text style={styles.profileName}>Vrapues i GRC</Text><Text style={styles.profileSub}>Anëtar i komunitetit</Text><View style={styles.profileStats}><View><Text style={styles.profileStatValue}>0</Text><Text style={styles.profileStatLabel}>Vrapime</Text></View><View><Text style={styles.profileStatValue}>0 km</Text><Text style={styles.profileStatLabel}>Distanca</Text></View><View><Text style={styles.profileStatValue}>—</Text><Text style={styles.profileStatLabel}>Anëtar që</Text></View></View></View>
-      <View style={styles.noteCard}><Text style={styles.noteTitle}>Profili personal</Text><Text style={styles.noteText}>Ky version fillestar nuk kërkon llogari. Regjistrimi dhe sinkronizimi i statistikave mund të shtohen kur të jetë gati sistemi i anëtarësimit.</Text></View>
-      <TouchableOpacity style={styles.outlineButton} onPress={() => Alert.alert('Gjakova Run Club', 'Na ndiq në rrjetet sociale për lajmet dhe vrapimet e ardhshme.')}><Text style={styles.outlineButtonText}>Lidhu me klubin  →</Text></TouchableOpacity>
-    </ScrollView>
-  );
+function Profile({ going }: { going: boolean }) {
+  const share = () => Share.share({ message: 'Bashkohu me Gjakova Run Club — vrapojmë së bashku në Gjakovë!' });
+  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}><Text style={s.eyebrow}>HAPËSIRA JOTE</Text><Text style={s.pageTitle}>Profili</Text><View style={s.profileCard}><View style={s.avatar}><Text style={s.avatarText}>G</Text></View><Text style={s.profileName}>Mirë se erdhe, vrapues!</Text><Text style={s.profileCaption}>Nuk nevojitet llogari për t’u bashkuar.</Text><View style={s.rule} /><View style={s.profileStatus}><Text style={s.profileStatusLabel}>Takimi yt i ardhshëm</Text><Text style={s.profileStatusValue}>{going ? 'Je shënuar si i interesuar ✓' : 'Ende nuk je regjistruar'}</Text></View></View><View style={s.notice}><Text style={s.noticeMark}>i</Text><Text style={s.noticeText}>Ky version nuk ruan llogari apo histori vrapimesh. Regjistrimet ruhen vetëm gjatë përdorimit të aplikacionit.</Text></View><TouchableOpacity style={s.outline} onPress={share}><Text style={s.outlineText}>Fto një mik  ↗</Text></TouchableOpacity></ScrollView>;
+}
+function RunDetails({ run, onClose, going, setGoing }: { run: Run; onClose: () => void; going: boolean; setGoing: (v: boolean) => void }) {
+  return <View style={s.detailWrap}><TouchableOpacity onPress={onClose}><Text style={s.back}>‹  Kthehu</Text></TouchableOpacity><Pill>TAKIM I HAPUR</Pill><Text style={s.detailTitle}>{run.title}</Text><Text style={s.pageIntro}>{run.description}</Text><View style={s.detailPanel}><Text style={s.detailLabel}>KUR</Text><Text style={s.detailValue}>{run.day} · {run.time}</Text><Text style={s.detailLabel}>DISTANCA</Text><Text style={s.detailValue}>{run.distance}</Text><Text style={s.detailLabel}>VENDTAKIMI</Text><Text style={s.detailValue}>{run.place}</Text><Text style={s.detailLabel}>NIVELI</Text><Text style={s.detailValue}>{run.level}</Text></View><View style={s.notice}><Text style={s.noticeMark}>!</Text><Text style={s.noticeText}>Informacion demonstrues. Konfirmo datën, orarin dhe lokacionin me klubin para se të nisesh.</Text></View><TouchableOpacity style={[s.primaryWide, going && s.primaryDone]} onPress={() => setGoing(!going)}><Text style={s.primaryText}>{going ? '✓  U regjistrove si i interesuar' : 'Shëno interesimin  →'}</Text></TouchableOpacity></View>;
 }
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('Kryefaqja');
+  const [tab, setTab] = useState<Tab>('Sot');
   const [going, setGoing] = useState(false);
-  const toggleGoing = () => setGoing((current) => !current);
-  const tabs: { label: Tab; icon: string }[] = [
-    { label: 'Kryefaqja', icon: '⌂' },
-    { label: 'Vrapimet', icon: '↗' },
-    { label: 'Klubi', icon: '✳' },
-    { label: 'Profili', icon: '○' },
-  ];
-
-  return (
-    <View style={styles.app}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-      {tab === 'Kryefaqja' ? <HomeScreen onTab={setTab} going={going} onToggleGoing={toggleGoing} /> : null}
-      {tab === 'Vrapimet' ? <RunsScreen going={going} onToggleGoing={toggleGoing} /> : null}
-      {tab === 'Klubi' ? <ClubScreen /> : null}
-      {tab === 'Profili' ? <ProfileScreen /> : null}
-      <View style={styles.tabBar}>
-        {tabs.map((item) => {
-          const active = tab === item.label;
-          return <TouchableOpacity key={item.label} style={styles.tabItem} onPress={() => setTab(item.label)} accessibilityRole="button" accessibilityState={{ selected: active }}><Text style={[styles.tabIcon, active && styles.tabActive]}>{item.icon}</Text><Text style={[styles.tabLabel, active && styles.tabActive]}>{item.label}</Text></TouchableOpacity>;
-        })}
-      </View>
-    </View>
-  );
+  const [selectedRun, setSelectedRun] = useState<Run | null>(null);
+  const tabs: { name: Tab; icon: string }[] = [{ name: 'Sot', icon: '⌂' }, { name: 'Vrapimet', icon: '↗' }, { name: 'Klubi', icon: '✳' }, { name: 'Profili', icon: '○' }];
+  return <SafeAreaView style={s.app}><StatusBar barStyle="light-content" backgroundColor={C.bg} />{selectedRun ? <RunDetails run={selectedRun} onClose={() => setSelectedRun(null)} going={going} setGoing={setGoing} /> : <>{tab === 'Sot' && <Home going={going} setGoing={setGoing} onTab={setTab} onOpenRun={setSelectedRun} />}{tab === 'Vrapimet' && <Runs going={going} setGoing={setGoing} onOpenRun={setSelectedRun} />}{tab === 'Klubi' && <Club />}{tab === 'Profili' && <Profile going={going} />}<View style={s.tabBar}>{tabs.map((item) => { const active = tab === item.name; return <TouchableOpacity key={item.name} style={s.tab} onPress={() => { setSelectedRun(null); setTab(item.name); }} accessibilityRole="button" accessibilityState={{ selected: active }}><Text style={[s.tabIcon, active && s.tabSelected]}>{item.icon}</Text><Text style={[s.tabText, active && s.tabSelected]}>{item.name}</Text></TouchableOpacity>; })}</View></>}</SafeAreaView>;
 }
 
-const styles = StyleSheet.create({
-  app: { flex: 1, backgroundColor: COLORS.background, paddingTop: 12 },
-  content: { paddingHorizontal: 22, paddingTop: 14, paddingBottom: 28 },
-  topline: { flexDirection: 'row', alignItems: 'center', marginBottom: 34 },
-  brandMark: { width: 42, height: 42, borderRadius: 14, backgroundColor: COLORS.lime, alignItems: 'center', justifyContent: 'center' },
-  brandMarkText: { color: COLORS.background, fontSize: 24, fontWeight: '900' },
-  brandCopy: { marginLeft: 10, flex: 1 }, brandName: { color: COLORS.text, fontSize: 12, fontWeight: '900', letterSpacing: 2.2 }, brandSub: { color: COLORS.muted, fontSize: 9, fontWeight: '700', letterSpacing: 3, marginTop: 2 },
-  bell: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center' }, bellText: { color: COLORS.text, fontSize: 21 }, bellDot: { position: 'absolute', right: 9, top: 8, width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.lime },
-  welcomeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, eyebrow: { color: COLORS.lime, fontSize: 10, fontWeight: '800', letterSpacing: 1.8, marginBottom: 11 }, greeting: { color: COLORS.text, fontSize: 37, lineHeight: 40, fontWeight: '800', letterSpacing: -1 }, shoeCircle: { width: 82, height: 82, borderRadius: 41, backgroundColor: COLORS.surfaceRaised, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.line }, shoeEmoji: { fontSize: 37 }, intro: { color: COLORS.muted, fontSize: 14, lineHeight: 21, marginTop: 15, maxWidth: 300 },
-  statsCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', backgroundColor: COLORS.surface, borderRadius: 18, borderWidth: 1, borderColor: COLORS.line, paddingVertical: 17, marginTop: 24, marginBottom: 29 }, statBlock: { alignItems: 'center', flex: 1 }, statValue: { color: COLORS.text, fontSize: 20, fontWeight: '800' }, statLabel: { color: COLORS.muted, fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 5 }, statDivider: { height: 31, width: 1, backgroundColor: COLORS.line },
-  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13, marginTop: 2 }, sectionTitle: { color: COLORS.text, fontSize: 17, fontWeight: '800' }, sectionAction: { color: COLORS.lime, fontSize: 9, fontWeight: '800', letterSpacing: .6 },
-  eventCard: { backgroundColor: COLORS.surface, borderRadius: 20, borderWidth: 1, borderColor: COLORS.line, padding: 18, marginBottom: 27 }, eventTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, tag: { backgroundColor: '#263820', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, tagText: { color: COLORS.lime, fontSize: 9, fontWeight: '800' }, eventDate: { color: COLORS.muted, fontSize: 9, fontWeight: '800', letterSpacing: .6 }, eventTitle: { color: COLORS.text, fontSize: 21, fontWeight: '800', marginTop: 17 }, eventDescription: { color: COLORS.muted, fontSize: 12, lineHeight: 18, marginTop: 7 }, eventMetaRow: { flexDirection: 'row', marginTop: 15, marginBottom: 16, gap: 18 }, eventMeta: { color: '#C4D0DF', fontSize: 11, fontWeight: '600' }, primaryButton: { backgroundColor: COLORS.lime, borderRadius: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 }, buttonGoing: { backgroundColor: '#314325' }, primaryButtonText: { color: COLORS.background, fontSize: 13, fontWeight: '900' }, attendeeText: { color: COLORS.muted, fontSize: 10, textAlign: 'center', marginTop: 13 },
-  clubCard: { backgroundColor: COLORS.surfaceRaised, borderRadius: 16, padding: 15, flexDirection: 'row', alignItems: 'center', marginTop: 2 }, clubIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: '#273822', alignItems: 'center', justifyContent: 'center' }, clubIconText: { color: COLORS.lime, fontSize: 23 }, clubCopy: { flex: 1, marginLeft: 12 }, clubTitle: { color: COLORS.text, fontSize: 12, fontWeight: '800' }, clubDescription: { color: COLORS.muted, fontSize: 10, marginTop: 5 }, chevron: { color: COLORS.lime, fontSize: 28, paddingHorizontal: 4 }, bottomSpace: { height: 22 },
-  tabBar: { flexDirection: 'row', backgroundColor: '#101A29', borderTopWidth: 1, borderTopColor: COLORS.line, paddingTop: 9, paddingBottom: 15 }, tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 }, tabIcon: { color: COLORS.muted, fontSize: 21, height: 24 }, tabLabel: { color: COLORS.muted, fontSize: 9, fontWeight: '700' }, tabActive: { color: COLORS.lime },
-  pageTitle: { color: COLORS.text, fontSize: 34, fontWeight: '800', letterSpacing: -.8, marginBottom: 8 }, pageIntro: { color: COLORS.muted, fontSize: 14, lineHeight: 21, marginBottom: 25 }, weekStrip: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: COLORS.surface, borderRadius: 16, padding: 11, marginBottom: 29 }, dayCell: { alignItems: 'center', paddingVertical: 7, paddingHorizontal: 5, borderRadius: 11 }, daySelected: { backgroundColor: COLORS.lime }, dayText: { color: COLORS.muted, fontSize: 8, fontWeight: '800' }, dayNumber: { color: COLORS.text, fontSize: 12, fontWeight: '800', marginTop: 7 }, dayTextSelected: { color: COLORS.background }, runListCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.line, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', marginBottom: 13 }, runDateBox: { width: 51, height: 57, borderRadius: 12, backgroundColor: COLORS.surfaceRaised, alignItems: 'center', justifyContent: 'center' }, runMonth: { color: COLORS.lime, fontSize: 9, fontWeight: '900' }, runDay: { color: COLORS.text, fontSize: 20, fontWeight: '800', marginTop: 1 }, runInfo: { marginLeft: 13, flex: 1 }, runTime: { color: COLORS.blue, fontSize: 9, fontWeight: '800', letterSpacing: .7 }, runName: { color: COLORS.text, fontSize: 14, fontWeight: '800', marginTop: 5 }, runPlace: { color: COLORS.muted, fontSize: 10, marginTop: 5 }, secondRun: { marginTop: 18 }, noteCard: { backgroundColor: '#162235', borderRadius: 16, borderLeftWidth: 3, borderLeftColor: COLORS.lime, padding: 16, marginTop: 18 }, noteTitle: { color: COLORS.text, fontSize: 13, fontWeight: '800', marginBottom: 6 }, noteText: { color: COLORS.muted, fontSize: 12, lineHeight: 18 },
-  manifestoCard: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.line, borderRadius: 20, padding: 20, marginBottom: 28 }, manifestoQuote: { color: COLORS.lime, fontSize: 45, lineHeight: 48, fontWeight: '900' }, manifestoText: { color: COLORS.text, fontSize: 22, lineHeight: 29, fontWeight: '700', marginTop: 2 }, manifestoCaption: { color: COLORS.lime, fontSize: 9, fontWeight: '800', letterSpacing: 1.4, marginTop: 18 }, valueRow: { flexDirection: 'row', alignItems: 'flex-start', borderBottomWidth: 1, borderBottomColor: COLORS.line, paddingVertical: 15 }, valueNumber: { color: COLORS.lime, fontSize: 11, fontWeight: '900', marginRight: 15, marginTop: 2 }, valueCopy: { flex: 1 }, valueTitle: { color: COLORS.text, fontSize: 14, fontWeight: '800' }, valueDescription: { color: COLORS.muted, fontSize: 11, marginTop: 5, lineHeight: 16 }, outlineButton: { borderWidth: 1, borderColor: COLORS.lime, borderRadius: 12, minHeight: 48, alignItems: 'center', justifyContent: 'center', marginTop: 23 }, outlineButtonText: { color: COLORS.lime, fontSize: 13, fontWeight: '800' },
-  profileCard: { alignItems: 'center', backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.line, borderRadius: 20, padding: 22, marginTop: 4 }, avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.surfaceRaised, alignItems: 'center', justifyContent: 'center' }, avatarText: { fontSize: 33 }, profileName: { color: COLORS.text, fontSize: 18, fontWeight: '800', marginTop: 13 }, profileSub: { color: COLORS.muted, fontSize: 11, marginTop: 5 }, profileStats: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', borderTopWidth: 1, borderTopColor: COLORS.line, marginTop: 20, paddingTop: 17 }, profileStatValue: { color: COLORS.text, fontSize: 14, fontWeight: '800', textAlign: 'center' }, profileStatLabel: { color: COLORS.muted, fontSize: 9, marginTop: 5, textAlign: 'center' },
+const s = StyleSheet.create({
+  app: { flex: 1, backgroundColor: C.bg }, content: { paddingHorizontal: 22, paddingTop: 16, paddingBottom: 36 }, brandRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 37 }, brandIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: C.lime, alignItems: 'center', justifyContent: 'center' }, brandIconText: { color: C.bg, fontWeight: '900', fontSize: 24 }, brandName: { color: C.text, fontSize: 12, fontWeight: '900', letterSpacing: 2 }, brandSub: { color: C.muted, fontSize: 9, fontWeight: '700', letterSpacing: 3, marginTop: 2 }, liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.lime, marginRight: 7 }, brandStatus: { color: C.muted, fontSize: 8, letterSpacing: .7, fontWeight: '700' }, eyebrow: { color: C.lime, fontSize: 10, fontWeight: '800', letterSpacing: 1.6, marginBottom: 12 }, hero: { color: C.text, fontSize: 43, lineHeight: 47, fontWeight: '900', letterSpacing: -1.5 }, bodyLead: { color: C.muted, fontSize: 14, lineHeight: 22, marginTop: 13, marginBottom: 25, maxWidth: 330 }, heroPanel: { backgroundColor: C.panel, borderRadius: 20, borderWidth: 1, borderColor: C.border, padding: 18, marginBottom: 31 }, heroPanelTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, pill: { alignSelf: 'flex-start', backgroundColor: '#263820', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, pillText: { color: C.lime, fontSize: 9, fontWeight: '900', letterSpacing: .5 }, heroDate: { color: C.muted, fontSize: 10, fontWeight: '800' }, eventTitle: { color: C.text, fontSize: 22, fontWeight: '800', marginTop: 19 }, eventSummary: { color: C.muted, fontSize: 12, lineHeight: 19, marginTop: 7 }, metaRow: { flexDirection: 'row', gap: 18, marginTop: 16, marginBottom: 17 }, meta: { color: '#CBD5E1', fontSize: 11, fontWeight: '700' }, buttonRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14 }, primary: { flex: 1, minHeight: 47, borderRadius: 12, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, backgroundColor: C.lime }, primaryWide: { minHeight: 50, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: C.lime, marginTop: 22 }, primaryDone: { backgroundColor: '#314325' }, primaryText: { color: C.bg, fontSize: 12, fontWeight: '900', textAlign: 'center' }, circleButton: { width: 46, height: 46, borderRadius: 13, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center' }, circleButtonText: { color: C.lime, fontSize: 21, fontWeight: '700' }, disclaimer: { color: '#77879B', fontSize: 9, marginTop: 12 }, heading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 13, marginTop: 2 }, headingText: { color: C.text, fontSize: 17, fontWeight: '800' }, link: { color: C.lime, fontSize: 9, fontWeight: '900', letterSpacing: .5 }, featureRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.panel, borderRadius: 15, padding: 13, marginBottom: 9, gap: 12 }, featureIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#273822', alignItems: 'center', justifyContent: 'center' }, featureIconText: { color: C.lime, fontSize: 10, fontWeight: '900' }, featureTitle: { color: C.text, fontSize: 12, fontWeight: '800' }, featureText: { color: C.muted, fontSize: 10, marginTop: 4 }, chevron: { color: C.muted, fontSize: 24 }, outline: { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: C.lime, alignItems: 'center', justifyContent: 'center', marginTop: 18 }, outlineText: { color: C.lime, fontSize: 12, fontWeight: '800' }, tabBar: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.border, backgroundColor: '#101A29', paddingTop: 9, paddingBottom: 8 }, tab: { flex: 1, alignItems: 'center', gap: 3 }, tabIcon: { color: C.muted, fontSize: 20, height: 23 }, tabText: { color: C.muted, fontSize: 9, fontWeight: '700' }, tabSelected: { color: C.lime }, pageTitle: { color: C.text, fontSize: 35, fontWeight: '900', letterSpacing: -1, marginBottom: 8 }, pageIntro: { color: C.muted, fontSize: 14, lineHeight: 22, marginBottom: 20 }, notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: '#172235', borderRadius: 13, padding: 13, marginBottom: 17 }, noticeMark: { color: C.lime, fontSize: 13, fontWeight: '900' }, noticeText: { color: C.muted, flex: 1, fontSize: 11, lineHeight: 16 }, runCard: { backgroundColor: C.panel, borderWidth: 1, borderColor: C.border, borderRadius: 18, padding: 17, marginBottom: 13 }, runCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, runOrdinal: { color: '#54657A', fontSize: 11, fontWeight: '900' }, runTitle: { color: C.text, fontSize: 20, fontWeight: '800', marginTop: 16 }, runDescription: { color: C.muted, fontSize: 12, lineHeight: 19, marginTop: 7 }, rule: { height: 1, backgroundColor: C.border, marginVertical: 15 }, runMeta: { color: '#C5D0DE', fontSize: 11, marginBottom: 9 }, manifesto: { backgroundColor: C.panel, borderWidth: 1, borderColor: C.border, borderRadius: 20, padding: 21, marginBottom: 29 }, quote: { color: C.lime, fontSize: 44, lineHeight: 46, fontWeight: '900' }, manifestoText: { color: C.text, fontSize: 22, lineHeight: 30, fontWeight: '800' }, manifestoLabel: { color: C.lime, fontSize: 9, letterSpacing: 1.2, fontWeight: '900', marginTop: 17 }, valueRow: { flexDirection: 'row', gap: 14, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: C.border }, valueN: { color: C.lime, fontSize: 11, fontWeight: '900', marginTop: 2 }, valueTitle: { color: C.text, fontSize: 14, fontWeight: '800' }, valueCopy: { color: C.muted, fontSize: 11, marginTop: 5 }, profileCard: { backgroundColor: C.panel, borderWidth: 1, borderColor: C.border, borderRadius: 19, alignItems: 'center', padding: 20, marginVertical: 5 }, avatar: { width: 67, height: 67, borderRadius: 34, backgroundColor: '#263820', alignItems: 'center', justifyContent: 'center' }, avatarText: { color: C.lime, fontSize: 34, fontWeight: '900' }, profileName: { color: C.text, fontSize: 16, fontWeight: '800', marginTop: 13 }, profileCaption: { color: C.muted, fontSize: 11, marginTop: 5 }, profileStatus: { width: '100%' }, profileStatusLabel: { color: C.muted, fontSize: 10, textAlign: 'center' }, profileStatusValue: { color: C.text, fontSize: 13, fontWeight: '800', textAlign: 'center', marginTop: 7 }, detailWrap: { flex: 1, padding: 22, paddingTop: 35 }, back: { color: C.lime, fontSize: 13, fontWeight: '800', marginBottom: 27 }, detailTitle: { color: C.text, fontSize: 34, lineHeight: 40, fontWeight: '900', marginTop: 16, marginBottom: 10 }, detailPanel: { backgroundColor: C.panel, borderRadius: 17, borderWidth: 1, borderColor: C.border, padding: 18 }, detailLabel: { color: C.lime, fontSize: 9, letterSpacing: 1.2, fontWeight: '900', marginTop: 7 }, detailValue: { color: C.text, fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 10 },
 });

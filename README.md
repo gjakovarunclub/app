@@ -1,18 +1,24 @@
-# Gjakova Run Club — Mobile App
+# Gjakova Run Club — aplikacion mobil
 
-A native iOS and Android starter app built with Expo and React Native.
+Aplikacion mobil për iOS dhe Android, i ndërtuar me Expo dhe React Native.
 
-## Run locally
+## Nisja në pajisje ose simulator
 
-1. Install Node.js (LTS).
-2. From this directory run `npm install`.
-3. Run `npx expo start` and scan the QR code with Expo Go, or use `npm run ios` / `npm run android` with the relevant simulator or device configured.
+1. Instalo Node.js LTS.
+2. Në direktorinë e projektit ekzekuto `npm install`.
+3. Ekzekuto `npx expo start`.
+4. Skanoni QR kodin me Expo Go ose përdorni simulatorin iOS/Android.
 
-## Included in this first version
+Komandat `npm run ios` dhe `npm run android` nisin projektin në simulatorin përkatës (duhet Xcode në macOS për iOS).
 
-- Albanian-language home screen and club identity
-- Upcoming group runs and a simple local RSVP interaction
-- Club information and a basic runner profile
-- Native bottom-tab navigation
+## Çfarë përfshin
 
-Events, attendance, and profile values are sample/local state only. A backend, real club schedule, authentication, push notifications, and store signing/build setup are not included yet. Update the sample event details with confirmed club information before release.
+- Ndërfaqe mobile në shqip me navigim native-style.
+- Kryefaqe, listë vrapimesh, faqe të klubit dhe profil bazik.
+- Ekran detajesh për vrapimin dhe shënim lokal të interesimit.
+- Lidhje me Instagram dhe ndarje të aplikacionit.
+- Layout të errët me stil vizual të përshtatur për Gjakova Run Club.
+
+## Para publikimit
+
+Repoja e faqes nuk përmban ende përmbajtje reale për oraret, lokacionet, eventet ose anëtarësimin. Për këtë arsye, eventet në aplikacion janë shënuar qartë si shembuj demonstrues dhe duhen zëvendësuar me të dhëna të konfirmuara. Regjistrimi nuk dërgohet në server dhe profili nuk ruhet pas mbylljes së aplikacionit. Për përdorim real duhen integruar burimi i të dhënave/API-ja e klubit, ruajtja e pjesëmarrjes, njoftimet dhe konfigurimi i publikimit në App Store/Google Play.
