@@ -1,24 +1,28 @@
-# Gjakova Run Club — aplikacion mobil
+# Gjakova Run Club — iOS & Android
 
-Aplikacion mobil për iOS dhe Android, i ndërtuar me Expo dhe React Native.
+A bilingual mobile app built with Expo and React Native. The interface is available in English and German; change the language from **Profile → App preferences**.
 
-## Nisja në pajisje ose simulator
+## Run the app
 
-1. Instalo Node.js LTS.
-2. Në direktorinë e projektit ekzekuto `npm install`.
-3. Ekzekuto `npx expo start`.
-4. Skanoni QR kodin me Expo Go ose përdorni simulatorin iOS/Android.
+1. Install Node.js LTS.
+2. Run `npm install` in the project directory.
+3. Run `npx expo start` and scan the QR code using Expo Go, or launch an available iOS/Android simulator with `npm run ios` / `npm run android`.
 
-Komandat `npm run ios` dhe `npm run android` nisin projektin në simulatorin përkatës (duhet Xcode në macOS për iOS).
+## Included in this app prototype
 
-## Çfarë përfshin
+- Four mobile sections: Home, Events, Community and Profile.
+- English/German interface, including event labels and controls.
+- Interactive June 2026 calendar, sample event details, and local saved-interest list.
+- Member dashboard, membership application form with basic input validation, and local status.
+- Gallery layout, Instagram and Strava links, app sharing, and a local reminder preference.
+- Responsive React Native screens for iOS and Android.
 
-- Ndërfaqe mobile në shqip me navigim native-style.
-- Kryefaqe, listë vrapimesh, faqe të klubit dhe profil bazik.
-- Ekran detajesh për vrapimin dhe shënim lokal të interesimit.
-- Lidhje me Instagram dhe ndarje të aplikacionit.
-- Layout të errët me stil vizual të përshtatur për Gjakova Run Club.
+## Important before launch
 
-## Para publikimit
+This repository does not yet provide a club API or confirmed event schedule. Calendar events and locations in the app are clearly marked as samples and must be replaced with approved club information. Gallery images are remote illustrative stock photos and should be replaced with club-owned images and appropriate usage rights.
 
-Repoja e faqes nuk përmban ende përmbajtje reale për oraret, lokacionet, eventet ose anëtarësimin. Për këtë arsye, eventet në aplikacion janë shënuar qartë si shembuj demonstrues dhe duhen zëvendësuar me të dhëna të konfirmuara. Regjistrimi nuk dërgohet në server dhe profili nuk ruhet pas mbylljes së aplikacionit. Për përdorim real duhen integruar burimi i të dhënave/API-ja e klubit, ruajtja e pjesëmarrjes, njoftimet dhe konfigurimi i publikimit në App Store/Google Play.
+This frontend prototype does not implement a server, account authentication, delivery of membership applications, persistent storage, actual push notifications, live Strava integration, or store-ready signing/builds. The membership form and RSVP only update local app state. The reminder switch is a preference UI, not a notification subscription. Add a secure backend and the club's verified data before collecting personal details or publishing. Expo development builds/EAS and Apple/Google developer accounts are needed to create production store releases.
+
+## App metadata
+
+The Expo app configuration uses the package identifiers `org.gjakovarunclub.app` for iOS and Android. Confirm that these identifiers are available and owned by the publisher before store submission.
